@@ -61,6 +61,28 @@ async function run() {
      };
 
 
+      
+     // Put api to add user
+     app.put("/user/:email",jwtVerify, async (req, res) => {
+        const email = req.params.email;
+        const data = req.body;
+        const filter = { email: email };
+        const options = { upsert: true };
+        const updateDoc = {
+           $set: data,
+        };
+        const result = await userCollection.updateOne(
+           filter,
+           updateDoc,
+           options
+        );
+        const token = jwt.sign(
+           { email: email },
+           process.env.ACCESS_TOKEN_SECRET
+        );
+        res.send({ token, result });
+     });
+      
    } finally {
    }
 }
