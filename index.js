@@ -46,7 +46,21 @@ async function run() {
          );
       };
 
-     
+      //    Verify Admin middleware
+
+      const verifyAdmin = async (req, res, next) => {
+        const requesterEmail = req.decoded.email;
+        const requesterUser = await userCollection.findOne({
+           email: requesterEmail,
+        });
+        if (requesterUser.role === "admin") {
+           next();
+        } else {
+           res.status(403).send({ message: "Forbidden access!" });
+        }
+     };
+
+
    } finally {
    }
 }
