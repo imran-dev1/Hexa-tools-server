@@ -83,6 +83,18 @@ async function run() {
         res.send({ token, result });
      });
       
+      
+
+     // Get api to read all users
+     app.get("/user", jwtVerify, async (req, res) => {
+        const query = req.query;
+        const cursor = userCollection.find(query);
+        const services = await cursor.toArray();
+        res.send(services);
+     });
+
+      
+      
    } finally {
    }
 }
