@@ -26,6 +26,26 @@ async function run() {
       const orderCollection = client.db("hexa_tools").collection("orders");
       const userCollection = client.db("hexa_tools").collection("users");
 
+      // Verify JWT middleware
+      const jwtVerify = (req, res, next) => {
+         const authHeader = req.headers.authorization;
+         if (!authHeader) {
+            return res.status(401).send({ message: "Unauthorize access!" });
+         }
+         const token = authHeader.split(" ")[1];
+         jwt.verify(
+            token,
+            process.env.ACCESS_TOKEN_SECRET,
+            function (error, decoded) {
+               if (error) {
+                  return res.status(403).send({ message: "Forbidden access!" });
+               }
+               req.decoded = decoded;
+               next();
+            }
+         );
+      };
+
      
    } finally {
    }
