@@ -49,82 +49,87 @@ async function run() {
       //    Verify Admin middleware
 
       const verifyAdmin = async (req, res, next) => {
-        const requesterEmail = req.decoded.email;
-        const requesterUser = await userCollection.findOne({
-           email: requesterEmail,
-        });
-        if (requesterUser.role === "admin") {
-           next();
-        } else {
-           res.status(403).send({ message: "Forbidden access!" });
-        }
-     };
+         const requesterEmail = req.decoded.email;
+         const requesterUser = await userCollection.findOne({
+            email: requesterEmail,
+         });
+         if (requesterUser.role === "admin") {
+            next();
+         } else {
+            res.status(403).send({ message: "Forbidden access!" });
+         }
+      };
 
+      // Put api to add user
+      app.put("/user/:email", jwtVerify, async (req, res) => {
+         const email = req.params.email;
+         const data = req.body;
+         const filter = { email: email };
+         const options = { upsert: true };
+         const updateDoc = {
+            $set: data,
+         };
+         const result = await userCollection.updateOne(
+            filter,
+            updateDoc,
+            options
+         );
+         const token = jwt.sign(
+            { email: email },
+            process.env.ACCESS_TOKEN_SECRET
+         );
+         res.send({ token, result });
+      });
 
-      
-     // Put api to add user
-     app.put("/user/:email",jwtVerify, async (req, res) => {
-        const email = req.params.email;
-        const data = req.body;
-        const filter = { email: email };
-        const options = { upsert: true };
-        const updateDoc = {
-           $set: data,
-        };
-        const result = await userCollection.updateOne(
-           filter,
-           updateDoc,
-           options
-        );
-        const token = jwt.sign(
-           { email: email },
-           process.env.ACCESS_TOKEN_SECRET
-        );
-        res.send({ token, result });
-     });
-      
-      
+      // Get api to read all users
+      app.get("/user", jwtVerify, async (req, res) => {
+         const query = req.query;
+         const cursor = userCollection.find(query);
+         const services = await cursor.toArray();
+         res.send(services);
+      });
 
-     // Get api to read all users
-     app.get("/user", jwtVerify, async (req, res) => {
-        const query = req.query;
-        const cursor = userCollection.find(query);
-        const services = await cursor.toArray();
-        res.send(services);
-     });
+      // Get api to read check admin
 
-      
-       
-     // Get api to read check admin
-      
-     app.get("/admin/:email", jwtVerify, async (req, res) => {
-        const email = req.params.email;
-        const user = await userCollection.findOne({ email: email });
-        const isAdmin = user.role === "admin";
+      app.get("/admin/:email", jwtVerify, async (req, res) => {
+         const email = req.params.email;
+         const user = await userCollection.findOne({ email: email });
+         const isAdmin = user.role === "admin";
 
-        res.send({ admin: isAdmin });
-     });
-       
-       
-      
-       // Get api to read all orders
-     app.get("/order", jwtVerify, async (req, res) => {
-        const query = req.query;
-        const email = req.query.email;
-        const page = req.query.page;
-        const decodedEmail = req.decoded.email;
-        if (email === decodedEmail) {
-           const cursor = appointmentCollection.find(query);
-           const myAppointments = await cursor.toArray();
-           res.send(myAppointments);
-        } else {
-           res.status(403).send({ message: "Forbidden access!" });
-        }
-     });
+         res.send({ admin: isAdmin });
+      });
 
-      
-      
-      
+      // Post api to insert order
+      app.post("/order", async (req, res) => {
+         const data = req.body;
+         const query = {
+            product: data.product,
+            date: data.date,
+            email: data.email,
+         };
+         const exists = await appointmentCollection.findOne(query);
+         if (exists) {
+            return res.send({ success: false, appointment: exists });
+         } else {
+            const result = await appointmentCollection.insertOne(data);
+            return res.send({ success: true, result });
+         }
+      });
+
+      // Get api to read all orders
+      app.get("/order", jwtVerify, async (req, res) => {
+         const query = req.query;
+         const email = req.query.email;
+         const page = req.query.page;
+         const decodedEmail = req.decoded.email;
+         if (email === decodedEmail) {
+            const cursor = appointmentCollection.find(query);
+            const myAppointments = await cursor.toArray();
+            res.send(myAppointments);
+         } else {
+            res.status(403).send({ message: "Forbidden access!" });
+         }
+      });
    } finally {
    }
 }
