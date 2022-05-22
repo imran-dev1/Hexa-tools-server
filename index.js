@@ -94,6 +94,18 @@ async function run() {
      });
 
       
+       
+     // Get api to read check admin
+      
+     app.get("/admin/:email", jwtVerify, async (req, res) => {
+        const email = req.params.email;
+        const user = await userCollection.findOne({ email: email });
+        const isAdmin = user.role === "admin";
+
+        res.send({ admin: isAdmin });
+     });
+       
+       
       
    } finally {
    }
