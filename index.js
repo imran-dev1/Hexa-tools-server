@@ -107,6 +107,24 @@ async function run() {
        
        
       
+       // Get api to read all orders
+     app.get("/order", jwtVerify, async (req, res) => {
+        const query = req.query;
+        const email = req.query.email;
+        const page = req.query.page;
+        const decodedEmail = req.decoded.email;
+        if (email === decodedEmail) {
+           const cursor = appointmentCollection.find(query);
+           const myAppointments = await cursor.toArray();
+           res.send(myAppointments);
+        } else {
+           res.status(403).send({ message: "Forbidden access!" });
+        }
+     });
+
+      
+      
+      
    } finally {
    }
 }
