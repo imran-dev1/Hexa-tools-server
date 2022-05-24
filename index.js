@@ -11,7 +11,7 @@ app.use(express.json());
 
 //Mongodb Connection
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.0tgfo.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
    useNewUrlParser: true,
@@ -25,6 +25,7 @@ async function run() {
       const productCollection = client.db("hexa_tools").collection("products");
       const orderCollection = client.db("hexa_tools").collection("orders");
       const userCollection = client.db("hexa_tools").collection("users");
+      const reviewCollection = client.db("hexa_tools").collection("reviews");
 
       // Verify JWT middleware
       const jwtVerify = (req, res, next) => {
@@ -61,7 +62,7 @@ async function run() {
       };
 
       // Put api to add user
-      app.put("/user/:email", jwtVerify, async (req, res) => {
+      app.put("/user/:email", async (req, res) => {
          const email = req.params.email;
          const data = req.body;
          const filter = { email: email };
@@ -80,6 +81,45 @@ async function run() {
          );
          res.send({ token, result });
       });
+
+      // Get api to read all products
+      app.get("/product", async (req, res) => {
+         const query = req.query;
+         const products = await productCollection.find(query).toArray();
+         res.send(products);
+      });
+
+      // Get api to read one product
+      app.get("/product/:id", async (req, res) => {
+         const id = req.params.id;
+         const filter = { _id: ObjectId(id) };
+         const product = await productCollection.findOne(filter);
+         res.send(product);
+      });
+
+
+      // Post api to add product
+      app.post("/product",jwtVerify, async (req, res) => {
+         const data = req.body;
+         const result = await productCollection.insertOne(data);
+         res.send(result);
+      });
+
+
+      // Post api to add user review
+      app.post("/review",jwtVerify, async (req, res) => {
+         const data = req.body;
+         const result = await reviewCollection.insertOne(data);
+         res.send(result);
+      });
+
+      // Get api to read all products
+      app.get("/review", async (req, res) => {
+         const query = req.query;
+         const products = await reviewCollection.find(query).sort({"_id":-1}).toArray();
+         res.send(products);
+      });
+
 
       // Get api to read all users
       app.get("/user", jwtVerify, async (req, res) => {
