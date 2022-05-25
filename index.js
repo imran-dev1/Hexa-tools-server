@@ -113,7 +113,7 @@ async function run() {
          res.send(result);
       });
 
-      // Patch api to add user
+      // Patch api to update product
       app.patch("/product/:id", async (req, res) => {
          const id = req.params.id;
          const data = req.body;
@@ -121,10 +121,7 @@ async function run() {
          const updateDoc = {
             $set: data,
          };
-         const result = await productCollection.updateOne(
-            filter,
-            updateDoc
-         );
+         const result = await productCollection.updateOne(filter, updateDoc);
 
          res.send(result);
       });
@@ -147,11 +144,56 @@ async function run() {
       });
 
       // Get api to read all users
-      app.get("/user", jwtVerify, async (req, res) => {
+      app.get("/user", async (req, res) => {
          const query = req.query;
          const cursor = userCollection.find(query);
          const services = await cursor.toArray();
          res.send(services);
+      });
+
+      // Get api to read one user
+      app.get("/user/:email", async (req, res) => {
+         const email = req.params.email;
+         const filter = { email: email };
+         const product = await userCollection.findOne(filter);
+         res.send(product);
+      });
+
+      // Patch api to update User
+      app.patch("/user/:email", async (req, res) => {
+         const email = req.params.email;
+         const data = req.body;
+         const filter = { email: email };
+         const options = { upsert: true };
+         const updateDoc = {
+            $set: data,
+         };
+         const result = await userCollection.updateOne(
+            filter,
+            updateDoc,
+            options
+         );
+
+         res.send(result);
+      });
+
+      // Put api to make admin
+      app.put("/user/admin/:email", jwtVerify, async (req, res) => {
+         const email = req.params.email;
+         const filter = { email: email };
+         const updateDoc = {
+            $set: { role: "admin" },
+         };
+         const requesterEmail = req.decoded.email;
+         const requesterUser = await userCollection.findOne({
+            email: requesterEmail,
+         });
+         if (requesterUser.role === "admin") {
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send({ success: true, result });
+         } else {
+            res.status(403).send({ message: "forbidden" });
+         }
       });
 
       // Get api to read check admin
