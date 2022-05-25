@@ -97,29 +97,54 @@ async function run() {
          res.send(product);
       });
 
-
       // Post api to add product
-      app.post("/product",jwtVerify, async (req, res) => {
+      app.post("/product", jwtVerify, async (req, res) => {
          const data = req.body;
          const result = await productCollection.insertOne(data);
          res.send(result);
       });
 
+      // Delete api to delete one product
+      app.delete("/product/:id", jwtVerify, async (req, res) => {
+         const id = req.params.id;
+         const filter = { _id: ObjectId(id) };
+         const result = await productCollection.deleteOne(filter);
+
+         res.send(result);
+      });
+
+      // Patch api to add user
+      app.patch("/product/:id", async (req, res) => {
+         const id = req.params.id;
+         const data = req.body;
+         const filter = { _id: ObjectId(id) };
+         const updateDoc = {
+            $set: data,
+         };
+         const result = await productCollection.updateOne(
+            filter,
+            updateDoc
+         );
+
+         res.send(result);
+      });
 
       // Post api to add user review
-      app.post("/review",jwtVerify, async (req, res) => {
+      app.post("/review", jwtVerify, async (req, res) => {
          const data = req.body;
          const result = await reviewCollection.insertOne(data);
          res.send(result);
       });
 
-      // Get api to read all products
+      // Get api to read all reviews
       app.get("/review", async (req, res) => {
          const query = req.query;
-         const products = await reviewCollection.find(query).sort({"_id":-1}).toArray();
+         const products = await reviewCollection
+            .find(query)
+            .sort({ _id: -1 })
+            .toArray();
          res.send(products);
       });
-
 
       // Get api to read all users
       app.get("/user", jwtVerify, async (req, res) => {
