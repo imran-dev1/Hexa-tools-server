@@ -98,14 +98,14 @@ async function run() {
       });
 
       // Post api to add product
-      app.post("/product", jwtVerify, async (req, res) => {
+      app.post("/product", jwtVerify, verifyAdmin, async (req, res) => {
          const data = req.body;
          const result = await productCollection.insertOne(data);
          res.send(result);
       });
 
       // Delete api to delete one product
-      app.delete("/product/:id", jwtVerify, async (req, res) => {
+      app.delete("/product/:id", jwtVerify, verifyAdmin, async (req, res) => {
          const id = req.params.id;
          const filter = { _id: ObjectId(id) };
          const result = await productCollection.deleteOne(filter);
@@ -114,7 +114,7 @@ async function run() {
       });
 
       // Patch api to update product
-      app.patch("/product/:id", async (req, res) => {
+      app.patch("/product/:id", jwtVerify, verifyAdmin, async (req, res) => {
          const id = req.params.id;
          const data = req.body;
          const filter = { _id: ObjectId(id) };
@@ -201,26 +201,16 @@ async function run() {
       app.get("/admin/:email", jwtVerify, async (req, res) => {
          const email = req.params.email;
          const user = await userCollection.findOne({ email: email });
-         const isAdmin = user.role === "admin";
+         const isAdmin = user?.role === "admin";
 
          res.send({ admin: isAdmin });
       });
 
-      // Post api to insert order
-      app.post("/order", async (req, res) => {
+      // Post api to add product
+      app.post("/order", jwtVerify, async (req, res) => {
          const data = req.body;
-         const query = {
-            product: data.product,
-            date: data.date,
-            email: data.email,
-         };
-         const exists = await appointmentCollection.findOne(query);
-         if (exists) {
-            return res.send({ success: false, appointment: exists });
-         } else {
-            const result = await appointmentCollection.insertOne(data);
-            return res.send({ success: true, result });
-         }
+         const result = await orderCollection.insertOne(data);
+         res.send(result);
       });
 
       // Get api to read all orders
