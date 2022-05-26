@@ -214,18 +214,32 @@ async function run() {
       });
 
       // Get api to read all orders
-      app.get("/order", jwtVerify, async (req, res) => {
-         const query = req.query;
-         const email = req.query.email;
-         const page = req.query.page;
+      app.get("/order/:email", jwtVerify, async (req, res) => {
+         const email = req.params.email;
          const decodedEmail = req.decoded.email;
          if (email === decodedEmail) {
-            const cursor = appointmentCollection.find(query);
-            const myAppointments = await cursor.toArray();
-            res.send(myAppointments);
+            const myOrders = await orderCollection
+               .find({ email: email })
+               .toArray();
+            res.send(myOrders);
          } else {
             res.status(403).send({ message: "Forbidden access!" });
          }
+      });
+
+      // Get api to read all orders for admin
+      app.get("/all-orders", jwtVerify, verifyAdmin, async (req, res) => {
+         const allOrders = await orderCollection.find({}).toArray();
+         res.send(allOrders);
+      });
+
+      // Delete api to delete one order
+      app.delete("/order/:id", jwtVerify, async (req, res) => {
+         const id = req.params.id;
+         const filter = { _id: ObjectId(id) };
+         const result = await orderCollection.deleteOne(filter);
+
+         res.send(result);
       });
    } finally {
    }
