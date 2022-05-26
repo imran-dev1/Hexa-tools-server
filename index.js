@@ -4,6 +4,7 @@ require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const app = express();
 const port = process.env.PORT || 4000;
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 //Use Middleware
 app.use(cors());
@@ -247,6 +248,20 @@ async function run() {
          } else {
             res.status(403).send({ message: "Forbidden access!" });
          }
+      });
+      // Payment Intent Api
+      app.post("/create-payment-intent", jwtVerify, async (req, res) => {
+         const order = req.body;
+         const price = order.orderAmount;
+         const amount = price * 100;
+         const paymentIntent = await stripe.paymentIntents.create({
+            amount: amount,
+            currency: "usd",
+            payment_method_types: ["card"],
+         });
+         res.send({
+            clientSecret: paymentIntent.client_secret,
+         });
       });
    } finally {
    }
