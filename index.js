@@ -206,25 +206,19 @@ async function run() {
          res.send({ admin: isAdmin });
       });
 
+      // Get api to read one order for payment
+      app.get("/order/:id", async (req, res) => {
+         const id = req.params.id;
+         const query = { _id: ObjectId(id) };
+         const order = await orderCollection.findOne(query);
+         res.send(order);
+      });
+
       // Post api to add product
       app.post("/order", jwtVerify, async (req, res) => {
          const data = req.body;
          const result = await orderCollection.insertOne(data);
          res.send(result);
-      });
-
-      // Get api to read all orders
-      app.get("/order/:email", jwtVerify, async (req, res) => {
-         const email = req.params.email;
-         const decodedEmail = req.decoded.email;
-         if (email === decodedEmail) {
-            const myOrders = await orderCollection
-               .find({ email: email })
-               .toArray();
-            res.send(myOrders);
-         } else {
-            res.status(403).send({ message: "Forbidden access!" });
-         }
       });
 
       // Get api to read all orders for admin
@@ -240,6 +234,19 @@ async function run() {
          const result = await orderCollection.deleteOne(filter);
 
          res.send(result);
+      });
+      // Get api to read my orders
+      app.get("/order/", jwtVerify, async (req, res) => {
+         const email = req.query.email;
+
+         const decodedEmail = req.decoded.email;
+         if (email === decodedEmail) {
+            const query = { email: email };
+            const result = await orderCollection.find(query).toArray();
+            res.send(result);
+         } else {
+            res.status(403).send({ message: "Forbidden access!" });
+         }
       });
    } finally {
    }
