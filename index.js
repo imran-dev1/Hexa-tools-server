@@ -86,7 +86,7 @@ async function run() {
       // Get api to read all products
       app.get("/product", async (req, res) => {
          const query = req.query;
-         const products = await productCollection.find(query).toArray();
+         const products = await productCollection.find(query).sort({ _id: -1 }).toArray();
          res.send(products);
       });
 
@@ -116,6 +116,19 @@ async function run() {
 
       // Patch api to update product
       app.patch("/product/:id", jwtVerify, verifyAdmin, async (req, res) => {
+         const id = req.params.id;
+         const data = req.body;
+         const filter = { _id: ObjectId(id) };
+         const updateDoc = {
+            $set: data,
+         };
+         const result = await productCollection.updateOne(filter, updateDoc);
+
+         res.send(result);
+      });
+
+      // Patch api to update availableUnit after placing order
+      app.patch("/product-available/:id", jwtVerify, async (req, res) => {
          const id = req.params.id;
          const data = req.body;
          const filter = { _id: ObjectId(id) };
@@ -224,7 +237,7 @@ async function run() {
 
       // Get api to read all orders for admin
       app.get("/all-orders", jwtVerify, verifyAdmin, async (req, res) => {
-         const allOrders = await orderCollection.find({}).toArray();
+         const allOrders = await orderCollection.find({}).sort({ _id: -1 }).toArray();
          res.send(allOrders);
       });
 
@@ -243,15 +256,30 @@ async function run() {
          const decodedEmail = req.decoded.email;
          if (email === decodedEmail) {
             const query = { email: email };
-            const result = await orderCollection.find(query).toArray();
+            const result = await orderCollection.find(query).sort({ _id: -1 }).toArray();
             res.send(result);
          } else {
             res.status(403).send({ message: "Forbidden access!" });
          }
       });
+
+      // Patch api to update order
+      app.patch("/order/:id", jwtVerify, async (req, res) => {
+         const id = req.params.id;
+         const data = req.body;
+         const filter = { _id: ObjectId(id) };
+         const updateDoc = {
+            $set: data,
+         };
+         const result = await orderCollection.updateOne(filter, updateDoc);
+
+         res.send(result);
+      });
+
       // Payment Intent Api
       app.post("/create-payment-intent", jwtVerify, async (req, res) => {
          const order = req.body;
+         console.log(order);
          const price = order.orderAmount;
          const amount = price * 100;
          const paymentIntent = await stripe.paymentIntents.create({
