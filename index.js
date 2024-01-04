@@ -13,7 +13,7 @@ app.use(express.json());
 //Mongodb Connection
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.0tgfo.mongodb.net/?retryWrites=true&w=majority`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.0tgfo.mongodb.net/hexa-tools/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
    useNewUrlParser: true,
    useUnifiedTopology: true,
